@@ -1,5 +1,5 @@
 {:paths
- ["src/core" "src/cards"]
+ ["src/core" "src/cards" "test"]
 
  :deps
  {com.wsscode/pathom-viz {:mvn/version "1.0.1"}}
@@ -11,6 +11,7 @@
                 com.wsscode/pathom        {:mvn/version "2.2.0-beta13"}}}
 
   :dev
-  {:extra-deps {nubank/workspaces          {:mvn/version "1.0.0-preview9"}
-                fulcrologic/fulcro-inspect {:mvn/version "2.2.3"}
-                binaryage/devtools         {:mvn/version "0.9.10"}}}}}
+  {:extra-deps {nubank/workspaces            {:mvn/version "1.0.0-preview9"}
+                fulcrologic/fulcro-incubator {:mvn/version "0.0.2"}
+                fulcrologic/fulcro-inspect   {:mvn/version "2.2.3"}
+                binaryage/devtools           {:mvn/version "0.9.10"}}}}}

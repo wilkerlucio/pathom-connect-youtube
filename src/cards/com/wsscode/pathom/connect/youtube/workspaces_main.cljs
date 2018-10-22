@@ -20,23 +20,44 @@
 (def defmutation (pc/mutation-factory mutation-fn indexes))
 
 (def parser
-  (p/parallel-parser {::p/env          (fn [env]
-                                         (merge
-                                           {::p/reader             [p/map-reader pc/parallel-reader pc/ident-reader]
-                                            ::pc/resolver-dispatch resolver-fn
-                                            ::pc/mutate-dispatch   mutation-fn
-                                            ::pc/indexes           @indexes
-                                            ::youtube/access-token (ls/get :youtube/token)
-                                            ::p.http/driver        p.http.fetch/request-async}
-                                           env))
-                      ::pc/defresolver defresolver
-                      ::pc/defmutation defmutation
-                      ::p/mutate       pc/mutate-async
-                      ::p/plugins      [p/error-handler-plugin
-                                        p/request-cache-plugin
-                                        p/trace-plugin
-                                        pc/connect-plugin
-                                        (youtube/youtube-plugin)]}))
+  (p/parallel-parser
+    {::p/env          (fn [env]
+                        (merge
+                          {::p/reader               [p/map-reader pc/parallel-reader pc/ident-reader p/env-placeholder-reader]
+                           ::pc/resolver-dispatch   resolver-fn
+                           ::pc/mutate-dispatch     mutation-fn
+                           ::pc/indexes             @indexes
+                           ::p/placeholder-prefixes #{">"}
+                           ::youtube/access-token   (ls/get :youtube/token)
+                           ::p.http/driver          p.http.fetch/request-async}
+                          env))
+     ::pc/defresolver defresolver
+     ::pc/defmutation defmutation
+     ::p/mutate       pc/mutate-async
+     ::p/plugins      [p/error-handler-plugin
+                       p/request-cache-plugin
+                       p/trace-plugin
+                       pc/connect-plugin
+                       (youtube/youtube-plugin)]}))
+
+(defresolver `meus-videos
+  {::pc/output [{:meus-videos [:youtube.video/id]}]}
+  (fn [_ _]
+    {:meus-videos [{:youtube.video/id "r3zywlNflJI"}
+                   {:youtube.video/id "q_tfHUvxJXs"}
+                   {:youtube.video/id "DAyKeqm2_uc"}]}))
+
+(defresolver `title-bla
+  {::pc/input  #{:youtube.video.snippet/title}
+   ::pc/output [:meu.youtube/titulo]}
+  (fn [_ {:keys [youtube.video.snippet/title]}]
+    {:meu.youtube/titulo (str "MEXI MERMO!! " title)}))
+
+(defresolver `duration-bla
+  {::pc/input  #{:youtube.video.content-details/duration}
+   ::pc/output [:meu.youtube/duracao]}
+  (fn [_ {:keys [youtube.video.content-details/duration]}]
+    {:meu.youtube/duracao (str "HUE " duration)}))
 
 (ws/defcard simple-parser-demo
   (pvw/pathom-card {::pvw/parser parser}))
