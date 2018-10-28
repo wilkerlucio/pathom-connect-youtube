@@ -119,17 +119,15 @@
                (pc/batch-restore-sort {::pc/inputs ids
                                        ::pc/key    :youtube.channel/id})))))))
 
-(def channel-by-username
-  (pc/resolver `channel-by-username
-    {::pc/input  #{:youtube.user/username}
-     ::pc/output channel-output}
-    (fn [env {:keys [youtube.user/username]}]
-      (go-catch
-        (-> (yth/youtube-api env "channels"
-              {:forUsername username
-               :part        (yth/request-parts env "youtube.channel")}) <?
-            :items
-            first
-            adapt-channel)))))
+(pc/defresolver channel-by-username [env {:keys [youtube.user/username]}]
+  {::pc/input  #{:youtube.user/username}
+   ::pc/output channel-output}
+  (go-catch
+    (-> (yth/youtube-api env "channels"
+          {:forUsername username
+           :part        (yth/request-parts env "youtube.channel")}) <?
+        :items
+        first
+        adapt-channel)))
 
 (def resolvers [channel-by-id channel-by-username])

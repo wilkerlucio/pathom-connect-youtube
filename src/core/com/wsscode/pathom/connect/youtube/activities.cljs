@@ -83,22 +83,20 @@
     (-> (yth/adapt-recursive activity "youtube.activity")
         (assoc id-key (:youtube.activity/id activity')))))
 
-(def channel-activity
-  (pc/resolver `channel-activity
-    {::pc/input  #{:youtube.channel/id}
-     ::pc/params [:youtube.page/max-results]
-     ::pc/output [{:youtube.channel/activity activity-output}]}
-    (fn [env {:keys [youtube.channel/id]}]
-      (let [max-results (get-in env [:ast :params :youtube.page/max-results])]
-        (go-catch
-          {:youtube.channel/activity
-           (->> (yth/youtube-api env "activities"
-                  (cond->
-                    {:channelId id
-                     :part      "snippet,contentDetails"}
-                    max-results (assoc :maxResults max-results))) <?
-                :items
-                (mapv adapt-activity))})))))
+(pc/defresolver channel-activity [env {:keys [youtube.channel/id]}]
+  {::pc/input  #{:youtube.channel/id}
+   ::pc/params [:youtube.page/max-results]
+   ::pc/output [{:youtube.channel/activity activity-output}]}
+  (let [max-results (get-in env [:ast :params :youtube.page/max-results])]
+    (go-catch
+      {:youtube.channel/activity
+       (->> (yth/youtube-api env "activities"
+              (cond->
+                {:channelId id
+                 :part      "snippet,contentDetails"}
+                max-results (assoc :maxResults max-results))) <?
+            :items
+            (mapv adapt-activity))})))
 
 (def resolvers [channel-activity])
 

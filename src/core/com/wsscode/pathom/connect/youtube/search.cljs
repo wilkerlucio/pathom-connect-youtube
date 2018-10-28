@@ -32,20 +32,18 @@
   (-> (update video :id :videoId)
       yt.video/adapt-video))
 
-(def channel-latest-videos
-  (pc/resolver `channel-latest-videos
-    {::pc/input  #{:youtube.channel/id}
-     ::pc/output [{:youtube.channel/latest-videos search-video-output}]}
-    (fn [env {:keys [youtube.channel/id]}]
-      (go-catch
-        {:youtube.channel/latest-videos
-         (->> (yth/youtube-api env "search"
-                {:channelId id
-                 :order     "date"
-                 :type      "video"
-                 :part      "snippet"}) <?
-              :items
-              (mapv adapt-search-video))}))))
+(pc/defresolver channel-latest-videos [env {:keys [youtube.channel/id]}]
+  {::pc/input  #{:youtube.channel/id}
+   ::pc/output [{:youtube.channel/latest-videos search-video-output}]}
+  (go-catch
+    {:youtube.channel/latest-videos
+     (->> (yth/youtube-api env "search"
+            {:channelId id
+             :order     "date"
+             :type      "video"
+             :part      "snippet"}) <?
+          :items
+          (mapv adapt-search-video))}))
 
 (def resolvers [channel-latest-videos])
 

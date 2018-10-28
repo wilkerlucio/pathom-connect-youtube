@@ -6,7 +6,7 @@
             [com.wsscode.pathom.connect.youtube.videos :as yt.videos]))
 
 (defn youtube-plugin []
-  {::pc/resolvers [yt.activities/resolvers
-                   yt.channels/resolvers
-                   yt.search/resolvers
-                   yt.videos/resolvers]})
+  {::pc/register [yt.activities/resolvers
+                  yt.channels/resolvers
+                  yt.search/resolvers
+                  yt.videos/resolvers]})
