@@ -11,53 +11,48 @@
             [com.wsscode.pathom.diplomat.http.fetch :as p.http.fetch]
             [nubank.workspaces.lib.local-storage :as ls]))
 
-(def indexes (atom {}))
+(def entity-autocomplete
+  (pc/resolver `entity-autocomplete
+    {::pc/output [{:entity/autocomplete
+                   [:autocomplete/group-key
+                    :autocomplete/group-entity-type
+                    {:autocomplete/items {:entity.type/company [:company/id :company/name :company/website :company/description]
+                                          :entity.type/contact [:company/id :contact/name :contact/email :contact/description]}}]}]}
+    (fn [{:keys [ast] :as env} _]
+      {::p/env              (assoc env ::p/union-path :entity/type)
+       :entity/autocomplete {:autocomplete/group-entity-type :entity.type/company
+                             :autocomplete/group-key         :atlas-crm.domain.autocomplete.group-key/search-results
 
-(defmulti resolver-fn pc/resolver-dispatch)
-(def defresolver (pc/resolver-factory resolver-fn indexes))
+                             :autocomplete/items             {:company/id   1
+                                                              :company/name "Avisi"
+                                                              :entity/type  :entity.type/company}}})))
 
-(defmulti mutation-fn pc/mutation-dispatch)
-(def defmutation (pc/mutation-factory mutation-fn indexes))
+(def my-videos
+  (pc/resolver `my-videos
+    {::pc/output [{:my-videos [:youtube.video/id]}]}
+    (fn [_ _]
+      {:my-videos [{:youtube.video/id "r3zywlNflJI"}
+                   {:youtube.video/id "q_tfHUvxJXs"}
+                   {:youtube.video/id "DAyKeqm2_uc"}]})))
 
 (def parser
   (p/parallel-parser
-    {::p/env          (fn [env]
-                        (merge
-                          {::p/reader               [p/map-reader pc/parallel-reader pc/ident-reader p/env-placeholder-reader]
-                           ::pc/resolver-dispatch   resolver-fn
-                           ::pc/mutate-dispatch     mutation-fn
-                           ::pc/indexes             @indexes
-                           ::p/placeholder-prefixes #{">"}
-                           ::youtube/access-token   (ls/get :youtube/token)
-                           ::p.http/driver          p.http.fetch/request-async}
-                          env))
-     ::pc/defresolver defresolver
-     ::pc/defmutation defmutation
-     ::p/mutate       pc/mutate-async
-     ::p/plugins      [p/error-handler-plugin
-                       p/request-cache-plugin
-                       p/trace-plugin
-                       pc/connect-plugin
-                       (youtube/youtube-plugin)]}))
-
-(defresolver `meus-videos
-  {::pc/output [{:meus-videos [:youtube.video/id]}]}
-  (fn [_ _]
-    {:meus-videos [{:youtube.video/id "r3zywlNflJI"}
-                   {:youtube.video/id "q_tfHUvxJXs"}
-                   {:youtube.video/id "DAyKeqm2_uc"}]}))
-
-(defresolver `title-bla
-  {::pc/input  #{:youtube.video.snippet/title}
-   ::pc/output [:meu.youtube/titulo]}
-  (fn [_ {:keys [youtube.video.snippet/title]}]
-    {:meu.youtube/titulo (str "MEXI MERMO!! " title)}))
-
-(defresolver `duration-bla
-  {::pc/input  #{:youtube.video.content-details/duration}
-   ::pc/output [:meu.youtube/duracao]}
-  (fn [_ {:keys [youtube.video.content-details/duration]}]
-    {:meu.youtube/duracao (str "HUE " duration)}))
+    {::p/env     (fn [env]
+                   (merge
+                     {::p/reader               [p/map-reader pc/parallel-reader pc/ident-reader p/env-placeholder-reader]
+                      ::p/placeholder-prefixes #{">"}
+                      ::youtube/access-token   (ls/get :youtube/token)
+                      ::p.http/driver          p.http.fetch/request-async}
+                     env))
+     ::p/mutate  pc/mutate-async
+     ::p/plugins [p/error-handler-plugin
+                  p/request-cache-plugin
+                  p/trace-plugin
+                  (pc/connect-plugin {::pc/resolvers [entity-autocomplete
+                                                      meus-videos
+                                                      title-bla
+                                                      duration-bla]})
+                  (youtube/youtube-plugin)]}))
 
 (ws/defcard simple-parser-demo
   (pvw/pathom-card {::pvw/parser parser}))
