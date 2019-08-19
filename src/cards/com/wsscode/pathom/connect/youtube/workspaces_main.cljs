@@ -38,20 +38,21 @@
 (def parser
   (p/parallel-parser
     {::p/env     (fn [env]
-                   (merge
-                     {::p/reader               [p/map-reader pc/parallel-reader pc/ident-reader p/env-placeholder-reader]
-                      ::p/placeholder-prefixes #{">"}
-                      ::youtube/access-token   (ls/get :youtube/token)
-                      ::p.http/driver          p.http.fetch/request-async}
-                     env))
+                     (merge
+                       {::p/reader               [p/map-reader pc/parallel-reader pc/ident-reader p/env-placeholder-reader]
+                        ::p/placeholder-prefixes #{">"}
+                        ::youtube/access-token   (ls/get :youtube/token)
+                        ::p.http/driver          p.http.fetch/request-async}
+                       env))
      ::p/mutate  pc/mutate-async
      ::p/plugins [p/error-handler-plugin
                   p/request-cache-plugin
                   p/trace-plugin
                   (pc/connect-plugin {::pc/resolvers [entity-autocomplete
-                                                      meus-videos
-                                                      title-bla
-                                                      duration-bla]})
+                                                      my-videos
+                                                      ;title-bla
+                                                      ;duration-bla
+                                                      ]})
                   (youtube/youtube-plugin)]}))
 
 (ws/defcard simple-parser-demo
